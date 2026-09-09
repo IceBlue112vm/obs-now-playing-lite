@@ -1,8 +1,12 @@
 import asyncio
+from pathlib import Path
 
 from winrt.windows.media.control import (
     GlobalSystemMediaTransportControlsSessionManager as MediaManager,
 )
+
+
+OUTPUT_FILE = Path(__file__).with_name("now_playing.txt")
 
 
 async def get_current_media(manager):
@@ -14,6 +18,16 @@ async def get_current_media(manager):
     media_properties = await session.try_get_media_properties_async()
 
     return media_properties.title, media_properties.artist
+
+
+def write_media_to_file(media):
+    if media is None:
+        content = ""
+    else:
+        title, artist = media
+        content = f"{title}\n{artist}"
+
+    OUTPUT_FILE.write_text(content, encoding="utf-8")
 
 
 async def main():
@@ -32,6 +46,7 @@ async def main():
                 print(f"Artist: {artist}")
                 print()
 
+            write_media_to_file(current_media)
             previous_media = current_media
 
         await asyncio.sleep(1)
