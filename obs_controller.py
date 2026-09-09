@@ -8,10 +8,16 @@ TITLE_SOURCE = "NowPlayingTitle"
 ARTIST_SOURCE = "NowPlayingArtist"
 TEXT_SOURCES = (
     TITLE_SOURCE,
-    ARTIST_SOURCE
+    ARTIST_SOURCE,
 )
 
 DEFAULT_TEXT_ALIGNMENT = "left"
+
+RIGHT_MARGIN = 20
+BOTTOM_MARGIN = 20
+LINE_GAP = 5
+
+SCENE_ITEM_ALIGNMENT_TOP_LEFT = 5
 
 
 class OBSController:
@@ -76,6 +82,14 @@ class OBSController:
                 return item["sceneItemId"]
 
         return None
+
+    def get_canvas_size(self):
+        response = self.client.get_video_settings()
+
+        return (
+            response.base_width,
+            response.base_height,
+        )
 
     # ------------------------------------------------------------------
     # Source management
@@ -180,12 +194,21 @@ class OBSController:
         ):
             self.deactivate_target_scene()
 
+        # Title / Artist Source 준비
         self.ensure_text_sources_in_scene(
             scene_name
         )
 
+        # Overlay가 하나의 오브젝트처럼 동작하도록
+        # Scene Item scale을 동일하게 유지
+        self.normalize_overlay_scale(
+            scene_name
+        )
+
+        # Text Source 내부 정렬은 좌측으로 통일
         self.set_text_alignment()
 
+        # 두 Source 모두 표시
         self.set_text_sources_enabled(
             scene_name,
             True,
@@ -262,3 +285,160 @@ class OBSController:
                 {"align": alignment},
                 True,
             )
+
+    def normalize_source_scale(
+        self,
+        scene_name,
+        source_name,
+    ):
+        scene_item_id = self.get_scene_item_id(
+            scene_name,
+            source_name,
+        )
+
+        if scene_item_id is None:
+            return
+
+        self.client.set_scene_item_transform(
+            scene_name,
+            scene_item_id,
+            {
+                "scaleX": 1.0,
+                "scaleY": 1.0,
+            },
+        )
+
+    def normalize_overlay_scale(
+        self,
+        scene_name,
+    ):
+        for source_name in TEXT_SOURCES:
+            self.normalize_source_scale(
+                scene_name,
+                source_name,
+            )
+
+    # ------------------------------------------------------------------
+    # Overlay layout
+    # ------------------------------------------------------------------
+
+    def get_source_size(
+        self,
+        scene_name,
+        source_name,
+    ):
+        scene_item_id = self.get_scene_item_id(
+            scene_name,
+            source_name,
+        )
+
+        if scene_item_id is None:
+            return None
+
+        response = self.client.get_scene_item_transform(
+            scene_name,
+            scene_item_id,
+        )
+
+        transform = response.scene_item_transform
+
+        return (
+            transform["sourceWidth"],
+            transform["sourceHeight"],
+        )
+
+    def set_source_position(
+        self,
+        scene_name,
+        source_name,
+        x,
+        y,
+    ):
+        scene_item_id = self.get_scene_item_id(
+            scene_name,
+            source_name,
+        )
+
+        if scene_item_id is None:
+            return
+
+        self.client.set_scene_item_transform(
+            scene_name,
+            scene_item_id,
+            {
+                "positionX": x,
+                "positionY": y,
+                "alignment": SCENE_ITEM_ALIGNMENT_TOP_LEFT,
+            },
+        )
+
+    def layout_overlay(self):
+        if self.target_scene is None:
+            return
+
+        scene_name = self.target_scene
+
+        canvas_width, canvas_height = (
+            self.get_canvas_size()
+        )
+
+        title_size = self.get_source_size(
+            scene_name,
+            TITLE_SOURCE,
+        )
+
+        artist_size = self.get_source_size(
+            scene_name,
+            ARTIST_SOURCE,
+        )
+
+        if (
+            title_size is None
+            or artist_size is None
+        ):
+            return
+
+        title_width, title_height = title_size
+        artist_width, artist_height = artist_size
+
+        # 둘 중 더 긴 문자열을 전체 Overlay 폭으로 사용
+        block_width = max(
+            title_width,
+            artist_width,
+        )
+
+        # 전체 Overlay의 왼쪽 시작점
+        left = (
+            canvas_width
+            - RIGHT_MARGIN
+            - block_width
+        )
+
+        # 아래에서부터 Artist 배치
+        artist_y = (
+            canvas_height
+            - BOTTOM_MARGIN
+            - artist_height
+        )
+
+        # Artist 위에 일정한 간격을 두고 Title 배치
+        title_y = (
+            artist_y
+            - LINE_GAP
+            - title_height
+        )
+
+        # 두 Source의 왼쪽 시작점을 동일하게 맞춤
+        self.set_source_position(
+            scene_name,
+            TITLE_SOURCE,
+            left,
+            title_y,
+        )
+
+        self.set_source_position(
+            scene_name,
+            ARTIST_SOURCE,
+            left,
+            artist_y,
+        )
