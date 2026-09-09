@@ -182,9 +182,44 @@ class App:
                 text="OBS: Connection failed"
             )
 
+            error_text = str(error).lower()
+            winerror = getattr(error, "winerror", None)
+
+            if (
+                    winerror == 10061
+                    or "actively refused" in error_text
+                    or "connection refused" in error_text
+                    or "timed out" in error_text
+                    or "failed to establish" in error_text
+            ):
+                message = (
+                    "OBS에 연결할 수 없습니다.\n\n"
+                    "OBS가 실행 중인지 확인하고,\n"
+                    "도구 → WebSocket 서버 설정에서 "
+                    "WebSocket 서버가 활성화되어 있는지 확인해주세요."
+                )
+
+            elif (
+                    "authentication" in error_text
+                    or "identified" in error_text
+                    or "identify client" in error_text
+                    or "password" in error_text
+            ):
+                message = (
+                    "OBS WebSocket 비밀번호가 올바르지 않습니다.\n\n"
+                    "OBS의 WebSocket 서버 설정에서 "
+                    "비밀번호를 다시 확인해주세요."
+                )
+
+            else:
+                message = (
+                    "OBS 연결 중 알 수 없는 오류가 발생했습니다.\n\n"
+                    f"{error}"
+                )
+
             messagebox.showerror(
                 "OBS Connection Failed",
-                str(error),
+                message,
             )
 
     def toggle_active(self):
