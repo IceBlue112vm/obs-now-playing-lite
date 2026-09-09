@@ -13,4 +13,5 @@ build/
 dist/
 
 # Runtime output
-now_playing.txt
+title.txt
+artist.txt

@@ -6,7 +6,8 @@ from winrt.windows.media.control import (
 )
 
 
-OUTPUT_FILE = Path(__file__).with_name("now_playing.txt")
+TITLE_FILE = Path(__file__).with_name("title.txt")
+ARTIST_FILE = Path(__file__).with_name("artist.txt")
 
 
 async def get_current_media(manager):
@@ -22,12 +23,13 @@ async def get_current_media(manager):
 
 def write_media_to_file(media):
     if media is None:
-        content = ""
+        title = ""
+        artist = ""
     else:
         title, artist = media
-        content = f"{title}\n{artist}"
 
-    OUTPUT_FILE.write_text(content, encoding="utf-8")
+    TITLE_FILE.write_text(title, encoding="utf-8")
+    ARTIST_FILE.write_text(artist, encoding="utf-8")
 
 
 async def main():
