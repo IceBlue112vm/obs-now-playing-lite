@@ -6,7 +6,12 @@ OBS_PORT = 4455
 
 TITLE_SOURCE = "NowPlayingTitle"
 ARTIST_SOURCE = "NowPlayingArtist"
-TEXT_SOURCES = (TITLE_SOURCE, ARTIST_SOURCE)
+TEXT_SOURCES = (
+    TITLE_SOURCE,
+    ARTIST_SOURCE
+)
+
+DEFAULT_TEXT_ALIGNMENT = "left"
 
 
 class OBSController:
@@ -179,6 +184,8 @@ class OBSController:
             scene_name
         )
 
+        self.set_text_alignment()
+
         self.set_text_sources_enabled(
             scene_name,
             True,
@@ -242,5 +249,16 @@ class OBSController:
             self.client.set_input_settings(
                 source_name,
                 {"font": font},
+                True,
+            )
+
+    def set_text_alignment(
+        self,
+        alignment=DEFAULT_TEXT_ALIGNMENT,
+    ):
+        for source_name in TEXT_SOURCES:
+            self.client.set_input_settings(
+                source_name,
+                {"align": alignment},
                 True,
             )
