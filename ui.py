@@ -8,21 +8,45 @@ from media import create_media_manager, get_current_media
 from obs_controller import OBSController
 
 
+MANUAL_UPDATE_DELAY_MS = 500
+
+
 class App:
     def __init__(self, root):
         self.root = root
         self.root.title("OBS Now Playing Lite")
-        self.root.geometry("420x280")
+        self.root.geometry("420x550")
         self.root.resizable(False, False)
 
         self.obs_controller = None
         self.current_media = None
         self.is_active = False
 
+        self.title_var = tk.StringVar()
+        self.artist_var = tk.StringVar()
+
+        # 자동 감지값을 Entry에 넣을 때
+        # 수동 수정으로 잘못 인식하지 않기 위한 플래그
+        self.is_auto_updating = False
+
+        # debounce용 예약 작업 ID
+        self.manual_update_job = None
+
         self.media_queue = queue.Queue()
         self.stop_event = threading.Event()
 
         self.create_widgets()
+
+        # 사용자가 Entry 내용을 변경하면 호출
+        self.title_var.trace_add(
+            "write",
+            self.schedule_manual_update,
+        )
+        self.artist_var.trace_add(
+            "write",
+            self.schedule_manual_update,
+        )
+
         self.start_media_worker()
 
         self.root.after(100, self.process_media_queue)
@@ -78,20 +102,36 @@ class App:
             text="Now Playing",
         ).pack(anchor="w")
 
-        self.title_label = ttk.Label(
+        ttk.Label(
             main_frame,
-            text="Title: -",
-        )
-        self.title_label.pack(
+            text="Title",
+        ).pack(
             anchor="w",
             pady=(5, 0),
         )
 
-        self.artist_label = ttk.Label(
+        self.title_entry = ttk.Entry(
             main_frame,
-            text="Artist: -",
+            textvariable=self.title_var,
         )
-        self.artist_label.pack(anchor="w")
+        self.title_entry.pack(
+            fill="x",
+            pady=(2, 5),
+        )
+
+        ttk.Label(
+            main_frame,
+            text="Artist",
+        ).pack(anchor="w")
+
+        self.artist_entry = ttk.Entry(
+            main_frame,
+            textvariable=self.artist_var,
+        )
+        self.artist_entry.pack(
+            fill="x",
+            pady=(2, 5),
+        )
 
         # Target scene
         self.target_label = ttk.Label(
@@ -217,6 +257,9 @@ class App:
             while True:
                 media = self.media_queue.get_nowait()
 
+                # 새 곡이 들어왔다면 대기 중인 수동 수정은 취소
+                self.cancel_manual_update()
+
                 self.current_media = media
 
                 if media is None:
@@ -225,12 +268,14 @@ class App:
                 else:
                     title, artist = media
 
-                self.title_label.config(
-                    text=f"Title: {title}"
-                )
-                self.artist_label.config(
-                    text=f"Artist: {artist}"
-                )
+                # 자동 감지값을 Entry에 넣는 동안
+                # trace callback을 무시
+                self.is_auto_updating = True
+
+                self.title_var.set(title)
+                self.artist_var.set(artist)
+
+                self.is_auto_updating = False
 
                 if (
                     self.is_active
@@ -246,8 +291,56 @@ class App:
             self.process_media_queue,
         )
 
+    def schedule_manual_update(self, *args):
+        if self.is_auto_updating:
+            return
+
+        self.cancel_manual_update()
+
+        self.manual_update_job = self.root.after(
+            MANUAL_UPDATE_DELAY_MS,
+            self.apply_manual_update,
+        )
+
+    def cancel_manual_update(self):
+        if self.manual_update_job is None:
+            return
+
+        self.root.after_cancel(
+            self.manual_update_job
+        )
+        self.manual_update_job = None
+
+    def apply_manual_update(self):
+        self.manual_update_job = None
+
+        title = self.title_var.get().strip()
+        artist = self.artist_var.get().strip()
+
+        self.current_media = (
+            title,
+            artist,
+        )
+
+        if (
+            self.is_active
+            and self.obs_controller is not None
+        ):
+            try:
+                self.obs_controller.update_media(
+                    self.current_media
+                )
+
+            except Exception as error:
+                messagebox.showerror(
+                    "OBS Error",
+                    str(error),
+                )
+
     def on_close(self):
         self.stop_event.set()
+
+        self.cancel_manual_update()
 
         if (
             self.is_active
