@@ -15,6 +15,7 @@ QUEUE_POLL_INTERVAL_MS = 100
 
 MANUAL_UPDATE_DELAY_MS = 500
 FONT_SIZE_UPDATE_DELAY_MS = 300
+OVERLAY_LAYOUT_DELAY_MS = 100
 
 DEFAULT_FONT_SIZE = 32
 MIN_FONT_SIZE = 10
@@ -45,6 +46,7 @@ class App:
         self.is_auto_updating = False
         self.manual_update_job = None
         self.font_size_update_job = None
+        self.overlay_layout_job = None
 
         # Background media worker
         self.media_queue = queue.Queue()
@@ -348,7 +350,11 @@ class App:
             text="OFF"
         )
 
+        self.schedule_overlay_layout()
+
     def deactivate(self):
+        self.cancel_overlay_layout()
+
         self.obs_controller.deactivate_target_scene()
 
         self.is_active = False
@@ -550,6 +556,47 @@ class App:
                 font_size
             )
 
+            self.schedule_overlay_layout()
+
+        except Exception as error:
+            messagebox.showerror(
+                "OBS Error",
+                str(error),
+            )
+
+    # ------------------------------------------------------------------
+    # Overlay layout
+    # ------------------------------------------------------------------
+
+    def schedule_overlay_layout(self):
+        self.cancel_overlay_layout()
+
+        self.overlay_layout_job = self.root.after(
+            OVERLAY_LAYOUT_DELAY_MS,
+            self.apply_overlay_layout,
+        )
+
+    def cancel_overlay_layout(self):
+        if self.overlay_layout_job is None:
+            return
+
+        self.root.after_cancel(
+            self.overlay_layout_job
+        )
+        self.overlay_layout_job = None
+
+    def apply_overlay_layout(self):
+        self.overlay_layout_job = None
+
+        if (
+                not self.is_active
+                or self.obs_controller is None
+        ):
+            return
+
+        try:
+            self.obs_controller.layout_overlay()
+
         except Exception as error:
             messagebox.showerror(
                 "OBS Error",
@@ -572,6 +619,8 @@ class App:
                 media
             )
 
+            self.schedule_overlay_layout()
+
         except Exception as error:
             messagebox.showerror(
                 "OBS Error",
@@ -587,6 +636,7 @@ class App:
 
         self.cancel_manual_update()
         self.cancel_font_size_update()
+        self.cancel_overlay_layout()
 
         if (
             self.is_active
