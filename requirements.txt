@@ -1,4 +1,6 @@
+obsws-python==1.8.0
 typing_extensions==4.16.0
+websocket-client==1.9.2
 winrt-runtime==3.2.1
 winrt-Windows.Foundation==3.2.1
 winrt-Windows.Media.Control==3.2.1
