@@ -1,0 +1,1 @@
+print("OBS Now Playing Lite")
