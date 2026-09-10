@@ -1,3 +1,6 @@
+import sys
+from pathlib import Path
+
 import asyncio
 import queue
 import threading
@@ -27,12 +30,25 @@ MIN_FONT_SIZE = 10
 MAX_FONT_SIZE = 500
 
 
+def resource_path(relative_path):
+    if getattr(sys, "frozen", False):
+        base_path = Path(sys._MEIPASS)
+    else:
+        base_path = Path(__file__).resolve().parent
+
+    return base_path / relative_path
+
+
 class App:
     def __init__(self, root):
         self.root = root
         self.root.title("OBS Now Playing Lite")
         self.root.geometry(WINDOW_SIZE)
         self.root.resizable(False, False)
+
+        self.root.iconbitmap(
+            str(resource_path("assets/OBSNowPlayingLite.ico"))
+        )
 
         # Saved settings
         saved_settings = load_settings()
