@@ -19,6 +19,11 @@ LINE_GAP = 5
 
 SCENE_ITEM_ALIGNMENT_TOP_LEFT = 5
 
+DEFAULT_OUTLINE_ENABLED = True
+DEFAULT_OUTLINE_SIZE = 3
+DEFAULT_OUTLINE_COLOR = 0x000000
+DEFAULT_OUTLINE_OPACITY = 100
+
 
 class OBSController:
     def __init__(self, password):
@@ -208,6 +213,9 @@ class OBSController:
         # Text Source 내부 정렬은 좌측으로 통일
         self.set_text_alignment()
 
+        # 기본 Outline 적용
+        self.set_text_outline()
+
         # 두 Source 모두 표시
         self.set_text_sources_enabled(
             scene_name,
@@ -316,6 +324,21 @@ class OBSController:
             self.normalize_source_scale(
                 scene_name,
                 source_name,
+            )
+
+    def set_text_outline(self):
+        settings = {
+            "outline": DEFAULT_OUTLINE_ENABLED,
+            "outline_size": DEFAULT_OUTLINE_SIZE,
+            "outline_color": DEFAULT_OUTLINE_COLOR,
+            "outline_opacity": DEFAULT_OUTLINE_OPACITY,
+        }
+
+        for source_name in TEXT_SOURCES:
+            self.client.set_input_settings(
+                source_name,
+                settings,
+                True,
             )
 
     # ------------------------------------------------------------------
