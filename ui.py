@@ -114,7 +114,7 @@ class App:
     def create_connection_section(self, parent):
         ttk.Label(
             parent,
-            text="OBS WebSocket Password",
+            text="OBS WebSocket 비밀번호",
         ).pack(anchor="w")
 
         password_frame = ttk.Frame(parent)
@@ -135,7 +135,7 @@ class App:
 
         self.connect_button = ttk.Button(
             password_frame,
-            text="Connect",
+            text="연결",
             command=self.connect_obs,
         )
         self.connect_button.pack(
@@ -145,7 +145,7 @@ class App:
 
         self.obs_status_label = ttk.Label(
             parent,
-            text="OBS: Disconnected",
+            text="OBS: 연결되지 않음",
         )
         self.obs_status_label.pack(anchor="w")
 
@@ -157,12 +157,12 @@ class App:
 
         ttk.Label(
             parent,
-            text="Now Playing",
+            text="현재 재생 정보",
         ).pack(anchor="w")
 
         ttk.Label(
             parent,
-            text="Title",
+            text="제목",
         ).pack(
             anchor="w",
             pady=(5, 0),
@@ -179,7 +179,7 @@ class App:
 
         ttk.Label(
             parent,
-            text="Artist",
+            text="아티스트",
         ).pack(anchor="w")
 
         self.artist_entry = ttk.Entry(
@@ -199,7 +199,7 @@ class App:
 
         ttk.Label(
             font_frame,
-            text="Font Size",
+            text="글자 크기",
         ).pack(side="left")
 
         self.font_size_spinbox = ttk.Spinbox(
@@ -224,7 +224,7 @@ class App:
     def create_control_section(self, parent):
         self.target_label = ttk.Label(
             parent,
-            text="Target Scene: -",
+            text="대상 장면: -",
         )
         self.target_label.pack(
             anchor="w",
@@ -233,7 +233,7 @@ class App:
 
         self.toggle_button = ttk.Button(
             parent,
-            text="ON",
+            text="표시 시작",
             command=self.toggle_active,
             state="disabled",
         )
@@ -291,7 +291,7 @@ class App:
         except Exception as error:
             if show_error:
                 messagebox.showerror(
-                    "Settings Error",
+                    "설정 오류",
                     (
                         "설정을 저장하지 못했습니다.\n\n"
                         f"{error}"
@@ -334,11 +334,11 @@ class App:
 
     def set_obs_connected(self):
         self.obs_status_label.config(
-            text="OBS: Connected"
+            text="OBS: 연결됨"
         )
 
         self.connect_button.config(
-            text="Connected",
+            text="연결됨",
             state="disabled",
         )
 
@@ -352,11 +352,11 @@ class App:
 
     def set_obs_disconnected(self):
         self.obs_status_label.config(
-            text="OBS: Connection failed"
+            text="OBS: 연결 실패"
         )
 
         self.connect_button.config(
-            text="Connect",
+            text="연결",
             state="normal",
         )
 
@@ -409,7 +409,7 @@ class App:
             )
 
         messagebox.showerror(
-            "OBS Connection Failed",
+            "OBS 연결 실패",
             message,
         )
 
@@ -429,7 +429,7 @@ class App:
 
         except Exception as error:
             messagebox.showerror(
-                "OBS Error",
+                "OBS 오류",
                 str(error),
             )
 
@@ -454,11 +454,11 @@ class App:
         self.is_active = True
 
         self.target_label.config(
-            text=f"Target Scene: {scene_name}"
+            text=f"대상 장면: {scene_name}"
         )
 
         self.toggle_button.config(
-            text="OFF"
+            text="표시 끄기"
         )
 
         self.schedule_overlay_layout()
@@ -471,11 +471,11 @@ class App:
         self.is_active = False
 
         self.target_label.config(
-            text="Target Scene: -"
+            text="대상 장면: -"
         )
 
         self.toggle_button.config(
-            text="ON"
+            text="표시 시작"
         )
 
     # ------------------------------------------------------------------
@@ -716,7 +716,7 @@ class App:
 
         except Exception as error:
             messagebox.showerror(
-                "OBS Error",
+                "OBS 오류",
                 str(error),
             )
 
@@ -768,7 +768,7 @@ class App:
 
         except Exception as error:
             messagebox.showerror(
-                "OBS Error",
+                "OBS 오류",
                 str(error),
             )
 
@@ -795,7 +795,7 @@ class App:
 
         except Exception as error:
             messagebox.showerror(
-                "OBS Error",
+                "OBS 오류",
                 str(error),
             )
 
