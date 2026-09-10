@@ -556,6 +556,12 @@ class App:
                 font_size
             )
 
+            # Font Size가 작아졌을 때 잘렸던 문자열을
+            # 원본으로 복구한 뒤 다시 길이를 검사
+            self.obs_controller.update_media(
+                self.current_media
+            )
+
             self.schedule_overlay_layout()
 
         except Exception as error:
@@ -595,6 +601,17 @@ class App:
             return
 
         try:
+            text_changed = (
+                self.obs_controller.fit_overlay_texts()
+            )
+
+            # ...으로 문자열을 변경했다면
+            # OBS가 새 폭을 계산할 시간을 다시 기다림
+            if text_changed:
+                self.schedule_overlay_layout()
+                return
+
+            # 모두 60% 안에 들어왔을 때 최종 배치
             self.obs_controller.layout_overlay()
 
         except Exception as error:
