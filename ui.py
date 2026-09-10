@@ -9,7 +9,7 @@ from obs_controller import OBSController
 from settings import load_settings, save_settings
 
 
-WINDOW_SIZE = "420x550"
+WINDOW_SIZE = "420x400"
 
 MEDIA_POLL_INTERVAL_SEC = 1
 QUEUE_POLL_INTERVAL_MS = 100
