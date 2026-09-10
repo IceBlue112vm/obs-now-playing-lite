@@ -1,6 +1,27 @@
-# OBS Now Playing Lite
+<p align="center">
+  <img src="assets/app-icon.png" width="160" alt="OBS Now Playing Lite">
+</p>
 
-A lightweight Windows app that displays your currently playing media in OBS.
+<h1 align="center">OBS Now Playing Lite</h1>
+
+<p align="center">
+  A lightweight Windows app that displays your currently playing media in OBS.
+</p>
+
+<p align="center">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-0078D4">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB">
+  <img alt="OBS" src="https://img.shields.io/badge/OBS-WebSocket-302E31">
+  <img alt="Release" src="https://img.shields.io/badge/release-v0.1.0-blue">
+</p>
+
+---
+
+OBS Now Playing Lite automatically detects the title and artist of the media
+currently playing on Windows and displays them in OBS.
+
+It is designed to reduce repetitive tasks such as copying track information,
+editing text sources, and repositioning them whenever the media changes.
 
 OBS Now Playing Lite automatically detects the title and artist of the media currently playing on Windows and displays them in OBS.
 
