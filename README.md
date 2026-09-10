@@ -12,7 +12,7 @@
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-0078D4">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB">
   <img alt="OBS" src="https://img.shields.io/badge/OBS-WebSocket-302E31">
-  <img alt="Release" src="https://img.shields.io/badge/release-v0.1.0-blue">
+  <img alt="Release" src="https://img.shields.io/badge/release-v0.2.0-blue">
 </p>
 
 ---
@@ -191,7 +191,7 @@ Depending on the application or service playing the media, the artist field may 
 
 ## Limitations
 
-Version 0.1.0 focuses on keeping the application simple and quick to use.
+Version 0.2.0 focuses on keeping the application simple and quick to use.
 
 The current version has the following limitations:
 
