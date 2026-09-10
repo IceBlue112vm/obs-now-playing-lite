@@ -13,5 +13,4 @@ build/
 dist/
 
 # Runtime output
-title.txt
-artist.txt
+settings.json
