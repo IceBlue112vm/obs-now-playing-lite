@@ -12,7 +12,7 @@ from obs_controller import OBSController
 from settings import load_settings, save_settings
 
 
-APP_VERSION = "0.2.0-dev"
+APP_VERSION = "0.2.0"
 APP_AUTHOR = "77ㅑ르륵"
 
 WINDOW_SIZE = "440x650"
