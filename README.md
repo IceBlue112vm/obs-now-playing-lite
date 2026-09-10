@@ -1,154 +1,197 @@
 # OBS Now Playing Lite
 
-Windows에서 현재 재생 중인 미디어의 제목과 아티스트 정보를 감지하여
-OBS에 자동으로 표시하는 간단한 프로그램입니다.
+A lightweight Windows app that displays your currently playing media in OBS.
 
-복사·붙여넣기와 위치 조정을 반복하지 않고,
-프로그램 실행 후 원하는 OBS 장면에서 바로 재생 정보를 표시하는 것을 목표로 합니다.
+OBS Now Playing Lite automatically detects the title and artist of the media currently playing on Windows and displays them in OBS.
 
-## 주요 기능
+It is designed to reduce repetitive tasks such as copying track information, editing text sources, and repositioning them whenever the media changes.
 
-- Windows 현재 재생 미디어의 제목 / 아티스트 자동 감지
-- OBS WebSocket을 통한 실시간 Text Source 갱신
-- 제목 / 아티스트 직접 수정
-- 글자 크기 조절
-- 기본 좌측 정렬
-- 화면 우하단 자동 배치
-- 제목과 아티스트의 왼쪽 줄맞춤 자동 유지
-- 긴 제목 / 아티스트 자동 축약 (`...`)
-- 설정 저장 및 다음 실행 시 자동 복원
-- 저장된 OBS 비밀번호를 이용한 자동 연결
+## Features
 
-## 요구 사항
+- Automatically detects the current media title and artist on Windows
+- Updates OBS text sources in real time through OBS WebSocket
+- Allows manual editing of the detected title and artist
+- Adjustable font size
+- Automatically positions the overlay in the bottom-right corner
+- Keeps the title and artist left-aligned
+- Automatically truncates long text with `...`
+- Saves settings between sessions
+- Automatically reconnects to OBS using the saved password
 
-- Windows 10 / 11
+## Requirements
+
+- Windows 10 or Windows 11
 - OBS Studio
-- OBS WebSocket 서버 활성화
+- OBS WebSocket enabled
 
-OBS WebSocket은 최신 OBS Studio에 기본 포함되어 있습니다.
+OBS WebSocket is included with modern versions of OBS Studio.
 
-## 사용 방법
+## Usage
 
-### 1. OBS WebSocket 활성화
+### 1. Enable OBS WebSocket
 
-OBS에서 다음 메뉴를 엽니다.
+In OBS Studio, open:
 
-`도구 → WebSocket 서버 설정`
+`Tools → WebSocket Server Settings`
 
-WebSocket 서버를 활성화합니다.
+Enable the WebSocket server and set a password.
 
-### 2. 프로그램 실행
+### 2. Run OBS Now Playing Lite
 
-`OBSNowPlayingLite.exe`를 실행합니다.
+Run:
 
-처음 실행할 때 Windows SmartScreen 경고가 표시될 수 있습니다.
+`OBSNowPlayingLite.exe`
 
-### 3. OBS 연결
+Windows SmartScreen may display a warning when the application is launched for the first time because the executable is not code-signed.
 
-최초 실행 시 OBS WebSocket 비밀번호를 입력하고 `연결`을 누릅니다.
+If this happens, select:
 
-연결에 성공하면 비밀번호와 글자 크기가 저장되며,
-다음 실행부터는 저장된 정보로 자동 연결을 시도합니다.
+`More info → Run anyway`
 
-### 4. 재생 정보 표시
+### 3. Connect to OBS
 
-OBS에서 재생 정보를 표시하고 싶은 장면을 선택한 뒤
-프로그램에서 `표시 시작`을 누릅니다.
+Enter your OBS WebSocket password and click `연결` (Connect).
 
-OBS에 다음 두 Text Source가 자동으로 생성됩니다.
+After a successful connection, the password and font size are saved locally.
+
+On future launches, the application will automatically attempt to connect to OBS using the saved password.
+
+### 4. Display the Overlay
+
+Select the OBS scene where you want the media information to appear.
+
+Then click:
+
+`표시 시작` (Start Display)
+
+The application automatically creates the following OBS text sources:
 
 - `NowPlayingTitle`
 - `NowPlayingArtist`
 
-두 Source는 프로그램 내부에서는 별도로 관리되지만,
-하나의 Now Playing Overlay처럼 함께 배치됩니다.
+Although these are two separate OBS sources internally, they are managed together as a single Now Playing overlay.
 
-`표시 끄기`를 누르면 해당 장면에서 두 Source가 함께 숨겨집니다.
+To hide the overlay, click:
 
-다른 장면에 표시하고 싶다면 `표시 끄기`를 누른 뒤
-원하는 장면으로 이동하여 다시 `표시 시작`을 누르면 됩니다.
+`표시 끄기` (Stop Display)
 
-## 표시 방식
+If you want to display it on another scene, stop the current display, switch to the desired scene in OBS, and start the display again.
 
-기본적으로 제목과 아티스트는 화면 우하단에 표시됩니다.
+## Overlay Behavior
 
-제목은 위쪽, 아티스트는 아래쪽에 배치되며
-둘 중 더 긴 문자열을 기준으로 왼쪽 시작 위치가 맞춰집니다.
+The overlay is positioned automatically in the bottom-right corner of the OBS canvas.
 
-글자 크기나 재생 정보가 변경되어도 위치가 자동으로 다시 계산됩니다.
+The title is displayed above the artist, and both lines share the same left edge.
 
-너무 긴 제목 또는 아티스트는 화면 폭을 과도하게 차지하지 않도록
-끝부분이 `...`으로 축약됩니다.
+Whenever the media information or font size changes, the application recalculates the overlay position automatically.
 
-## 설정 저장
+If the title or artist is too long, the displayed text is shortened with `...` to prevent it from occupying too much of the screen.
 
-설정은 프로그램과 같은 폴더의 `settings.json`에 저장됩니다.
+The original media information is preserved internally.
 
-현재 저장되는 설정은 다음과 같습니다.
+## Settings
 
-- OBS WebSocket 비밀번호
-- 글자 크기
+Settings are stored in:
 
-OBS WebSocket 비밀번호는 평문으로 저장하지 않으며,
-Windows DPAPI를 사용하여 현재 Windows 사용자 계정을 기준으로 암호화합니다.
+`settings.json`
 
-따라서 `settings.json`을 다른 PC나 다른 Windows 사용자 계정으로 복사하면
-저장된 비밀번호를 정상적으로 복호화하지 못할 수 있습니다.
+The file is created in the same directory as `OBSNowPlayingLite.exe`.
 
-### 설정 초기화
+Currently stored settings include:
 
-프로그램을 종료한 상태에서 `settings.json`을 삭제합니다.
+- OBS WebSocket password
+- Font size
 
-다음 실행 시 기본 설정으로 다시 시작되며,
-OBS WebSocket 비밀번호도 다시 입력해야 합니다.
+### Password Storage
 
-## 오류 해결
+The OBS WebSocket password is **not stored as plain text**.
 
-### OBS에 연결할 수 없습니다
+OBS Now Playing Lite uses Windows DPAPI to encrypt the password for the current Windows user account.
 
-다음 사항을 확인합니다.
+Because of this, copying `settings.json` to another computer or Windows user account may prevent the saved password from being decrypted.
 
-- OBS가 실행 중인지 확인합니다.
-- `도구 → WebSocket 서버 설정`을 엽니다.
-- WebSocket 서버가 활성화되어 있는지 확인합니다.
+### Resetting Settings
 
-### OBS WebSocket 비밀번호가 올바르지 않습니다
+Close OBS Now Playing Lite and delete:
 
-OBS의
+`settings.json`
 
-`도구 → WebSocket 서버 설정`
+The application will recreate the file when settings are saved again.
 
-에서 설정된 비밀번호를 확인한 뒤 다시 입력합니다.
+Deleting the file resets both the saved OBS WebSocket password and font size.
 
-### 저장된 비밀번호로 자동 연결되지 않습니다
+## Troubleshooting
 
-OBS WebSocket 비밀번호가 변경되었거나
-`settings.json`을 다른 PC 또는 Windows 계정에서 가져온 경우 발생할 수 있습니다.
+### Cannot connect to OBS
 
-프로그램을 종료하고 `settings.json`을 삭제한 뒤 다시 실행하여
-비밀번호를 새로 입력합니다.
+Make sure that:
 
-### Windows에서 실행을 차단합니다
+- OBS Studio is running
+- OBS WebSocket is enabled
+- The WebSocket server is using the default port `4455`
 
-코드 서명이 적용되지 않은 개인 제작 프로그램이므로
-최초 실행 시 Windows SmartScreen 경고가 나타날 수 있습니다.
+You can check the WebSocket settings from:
 
-`추가 정보 → 실행`을 선택하면 실행할 수 있습니다.
+`Tools → WebSocket Server Settings`
 
-## v0.1.0 제한 사항
+### Incorrect OBS WebSocket password
 
-현재 버전은 단순하고 빠르게 사용할 수 있는 것을 우선하여
-일부 표시 방식을 고정하고 있습니다.
+Open:
 
-- 표시 위치는 우하단 고정
-- 텍스트는 좌측 정렬
-- Title / Artist는 동일한 글자 크기 사용
-- 긴 문자열은 스크롤하지 않고 `...`으로 축약
-- Windows에서만 동작
-- 미디어에서 제공하는 메타데이터에 따라 아티스트 정보가 비어 있거나
-  실제 아티스트 대신 YouTube 채널명 등이 표시될 수 있음
+`Tools → WebSocket Server Settings`
 
-## 개발 환경
+in OBS and verify the password.
+
+Then enter the correct password in OBS Now Playing Lite and connect again.
+
+An incorrect password will not overwrite a previously saved valid password.
+
+### Automatic connection no longer works
+
+This may happen if:
+
+- The OBS WebSocket password was changed
+- `settings.json` was copied from another computer
+- `settings.json` was created under another Windows user account
+
+Close the application, delete `settings.json`, restart the application, and enter the OBS WebSocket password again.
+
+### Windows SmartScreen blocks the application
+
+OBS Now Playing Lite is currently distributed without a code-signing certificate.
+
+Because of this, Windows SmartScreen may display a warning when launching a downloaded executable.
+
+Select:
+
+`More info → Run anyway`
+
+to launch the application.
+
+### Artist information is missing or incorrect
+
+OBS Now Playing Lite displays the metadata provided by the current Windows media session.
+
+Depending on the application or service playing the media, the artist field may be empty or may contain information such as a channel name instead of the actual artist name.
+
+## Limitations
+
+Version 0.1.0 focuses on keeping the application simple and quick to use.
+
+The current version has the following limitations:
+
+- Windows only
+- Overlay position is fixed to the bottom-right corner
+- Text alignment is fixed to left
+- Title and artist use the same font size
+- Long text is truncated instead of scrolling
+- Media information depends on metadata provided by the Windows media session
+- Playback controls are not supported
+- Album artwork, lyrics, and playback progress are not supported
+
+## Development
+
+Built with:
 
 - Python 3.12
 - Tkinter
@@ -157,6 +200,17 @@ OBS WebSocket 비밀번호가 변경되었거나
 - obsws-python
 - PyInstaller
 
-## License
+### Build
 
-아직 라이선스가 정해지지 않았습니다.
+Install the dependencies:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+Build the executable using the included PyInstaller spec file:
+```powershell
+pyinstaller OBSNowPlayingLite.spec
+```
+
+The executable will be created in the dist directory.
