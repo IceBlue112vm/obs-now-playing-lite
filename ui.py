@@ -6,6 +6,7 @@ from tkinter import messagebox, ttk
 
 from media import create_media_manager, get_current_media
 from obs_controller import OBSController
+from settings import load_settings, save_settings
 
 
 WINDOW_SIZE = "420x550"
@@ -16,6 +17,7 @@ QUEUE_POLL_INTERVAL_MS = 100
 MANUAL_UPDATE_DELAY_MS = 500
 FONT_SIZE_UPDATE_DELAY_MS = 300
 OVERLAY_LAYOUT_DELAY_MS = 30
+AUTO_CONNECT_DELAY_MS = 200
 
 DEFAULT_FONT_SIZE = 32
 MIN_FONT_SIZE = 10
@@ -29,6 +31,23 @@ class App:
         self.root.geometry(WINDOW_SIZE)
         self.root.resizable(False, False)
 
+        # Saved settings
+        saved_settings = load_settings()
+
+        saved_font_size = saved_settings.get(
+            "font_size",
+            DEFAULT_FONT_SIZE,
+        )
+        saved_font_size = max(
+            MIN_FONT_SIZE,
+            min(saved_font_size, MAX_FONT_SIZE),
+        )
+
+        self.saved_password = saved_settings.get(
+            "password",
+            "",
+        )
+
         # Application state
         self.obs_controller = None
         self.current_media = None
@@ -38,9 +57,10 @@ class App:
         self.title_var = tk.StringVar()
         self.artist_var = tk.StringVar()
         self.font_size_var = tk.StringVar(
-            value=str(DEFAULT_FONT_SIZE)
+            value=str(saved_font_size)
         )
-        self.last_valid_font_size = DEFAULT_FONT_SIZE
+
+        self.last_valid_font_size = saved_font_size
 
         # UI update state
         self.is_auto_updating = False
@@ -53,6 +73,7 @@ class App:
         self.stop_event = threading.Event()
 
         self.create_widgets()
+        self.restore_password_field()
         self.bind_variable_changes()
         self.start_media_worker()
 
@@ -60,6 +81,13 @@ class App:
             QUEUE_POLL_INTERVAL_MS,
             self.process_media_queue,
         )
+
+        if self.saved_password:
+            self.root.after(
+                AUTO_CONNECT_DELAY_MS,
+                self.auto_connect_obs,
+            )
+
         self.root.protocol(
             "WM_DELETE_WINDOW",
             self.on_close,
@@ -187,6 +215,7 @@ class App:
             "<FocusOut>",
             self.clamp_font_size,
         )
+
         self.font_size_spinbox.bind(
             "<Return>",
             self.clamp_font_size,
@@ -218,42 +247,105 @@ class App:
             "write",
             self.schedule_manual_update,
         )
+
         self.artist_var.trace_add(
             "write",
             self.schedule_manual_update,
         )
+
         self.font_size_var.trace_add(
             "write",
             self.schedule_font_size_update,
         )
 
     # ------------------------------------------------------------------
+    # Settings
+    # ------------------------------------------------------------------
+
+    def restore_password_field(self):
+        if not self.saved_password:
+            return
+
+        self.password_entry.insert(
+            0,
+            self.saved_password,
+        )
+
+    def save_current_settings(
+        self,
+        font_size=None,
+        show_error=True,
+    ):
+        if font_size is None:
+            font_size = self.get_font_size()
+
+        if font_size is None:
+            font_size = self.last_valid_font_size
+
+        try:
+            save_settings(
+                font_size,
+                self.saved_password,
+            )
+
+        except Exception as error:
+            if show_error:
+                messagebox.showerror(
+                    "Settings Error",
+                    (
+                        "설정을 저장하지 못했습니다.\n\n"
+                        f"{error}"
+                    ),
+                )
+
+    # ------------------------------------------------------------------
     # OBS connection
     # ------------------------------------------------------------------
+
+    def auto_connect_obs(self):
+        if not self.saved_password:
+            return
+
+        self.connect_obs()
 
     def connect_obs(self):
         password = self.password_entry.get()
 
         try:
-            self.obs_controller = OBSController(password)
-            self.set_obs_connected()
+            obs_controller = OBSController(
+                password
+            )
 
         except Exception as error:
             self.obs_controller = None
             self.set_obs_disconnected()
-            self.show_obs_connection_error(error)
+            self.show_obs_connection_error(
+                error
+            )
+            return
+
+        self.obs_controller = obs_controller
+
+        # 연결이 실제로 성공한 비밀번호만 저장
+        self.saved_password = password
+
+        self.set_obs_connected()
+        self.save_current_settings()
 
     def set_obs_connected(self):
         self.obs_status_label.config(
             text="OBS: Connected"
         )
+
         self.connect_button.config(
             text="Connected",
             state="disabled",
         )
+
         self.password_entry.config(
             state="disabled",
         )
+
         self.toggle_button.config(
             state="normal",
         )
@@ -263,9 +355,26 @@ class App:
             text="OBS: Connection failed"
         )
 
+        self.connect_button.config(
+            text="Connect",
+            state="normal",
+        )
+
+        self.password_entry.config(
+            state="normal",
+        )
+
+        self.toggle_button.config(
+            state="disabled",
+        )
+
     def show_obs_connection_error(self, error):
         error_text = str(error).lower()
-        winerror = getattr(error, "winerror", None)
+        winerror = getattr(
+            error,
+            "winerror",
+            None,
+        )
 
         if (
             winerror == 10061
@@ -326,7 +435,8 @@ class App:
 
     def activate(self):
         scene_name = (
-            self.obs_controller.activate_current_scene()
+            self.obs_controller
+            .activate_current_scene()
         )
 
         font_size = self.get_font_size()
@@ -346,6 +456,7 @@ class App:
         self.target_label.config(
             text=f"Target Scene: {scene_name}"
         )
+
         self.toggle_button.config(
             text="OFF"
         )
@@ -362,6 +473,7 @@ class App:
         self.target_label.config(
             text="Target Scene: -"
         )
+
         self.toggle_button.config(
             text="ON"
         )
@@ -375,6 +487,7 @@ class App:
             target=self.run_media_worker,
             daemon=True,
         )
+
         thread.start()
 
     def run_media_worker(self):
@@ -395,6 +508,7 @@ class App:
                 self.media_queue.put(
                     current_media
                 )
+
                 previous_media = current_media
 
             await asyncio.sleep(
@@ -405,7 +519,10 @@ class App:
         try:
             while True:
                 media = self.media_queue.get_nowait()
-                self.handle_detected_media(media)
+
+                self.handle_detected_media(
+                    media
+                )
 
         except queue.Empty:
             pass
@@ -431,14 +548,25 @@ class App:
             artist,
         )
 
-        self.update_obs_if_active(media)
+        self.update_obs_if_active(
+            media
+        )
 
-    def set_media_fields(self, title, artist):
+    def set_media_fields(
+        self,
+        title,
+        artist,
+    ):
         self.is_auto_updating = True
 
         try:
-            self.title_var.set(title)
-            self.artist_var.set(artist)
+            self.title_var.set(
+                title
+            )
+
+            self.artist_var.set(
+                artist
+            )
 
         finally:
             self.is_auto_updating = False
@@ -465,6 +593,7 @@ class App:
         self.root.after_cancel(
             self.manual_update_job
         )
+
         self.manual_update_job = None
 
     def apply_manual_update(self):
@@ -477,7 +606,9 @@ class App:
 
         self.current_media = media
 
-        self.update_obs_if_active(media)
+        self.update_obs_if_active(
+            media
+        )
 
     # ------------------------------------------------------------------
     # Font size
@@ -498,6 +629,7 @@ class App:
         self.root.after_cancel(
             self.font_size_update_job
         )
+
         self.font_size_update_job = None
 
     def clamp_font_size(self, event=None):
@@ -507,16 +639,24 @@ class App:
             )
 
         except ValueError:
-            font_size = self.last_valid_font_size
+            font_size = (
+                self.last_valid_font_size
+            )
 
         font_size = max(
             MIN_FONT_SIZE,
-            min(font_size, MAX_FONT_SIZE),
+            min(
+                font_size,
+                MAX_FONT_SIZE,
+            ),
         )
 
         self.last_valid_font_size = font_size
 
-        if self.font_size_var.get() != str(font_size):
+        if (
+            self.font_size_var.get()
+            != str(font_size)
+        ):
             self.font_size_var.set(
                 str(font_size)
             )
@@ -530,7 +670,11 @@ class App:
         except ValueError:
             return None
 
-        if not MIN_FONT_SIZE <= font_size <= MAX_FONT_SIZE:
+        if not (
+            MIN_FONT_SIZE
+            <= font_size
+            <= MAX_FONT_SIZE
+        ):
             return None
 
         self.last_valid_font_size = font_size
@@ -544,6 +688,12 @@ class App:
 
         if font_size is None:
             return
+
+        # OBS가 꺼져 있거나 Overlay가 OFF여도
+        # 사용자가 선택한 Font Size는 저장
+        self.save_current_settings(
+            font_size
+        )
 
         if not self.is_active:
             return
@@ -589,20 +739,22 @@ class App:
         self.root.after_cancel(
             self.overlay_layout_job
         )
+
         self.overlay_layout_job = None
 
     def apply_overlay_layout(self):
         self.overlay_layout_job = None
 
         if (
-                not self.is_active
-                or self.obs_controller is None
+            not self.is_active
+            or self.obs_controller is None
         ):
             return
 
         try:
             text_changed = (
-                self.obs_controller.fit_overlay_texts()
+                self.obs_controller
+                .fit_overlay_texts()
             )
 
             # ...으로 문자열을 변경했다면
@@ -624,7 +776,10 @@ class App:
     # Common OBS update
     # ------------------------------------------------------------------
 
-    def update_obs_if_active(self, media):
+    def update_obs_if_active(
+        self,
+        media,
+    ):
         if (
             not self.is_active
             or self.obs_controller is None
@@ -651,6 +806,20 @@ class App:
     def on_close(self):
         self.stop_event.set()
 
+        # debounce가 실행되기 전에 프로그램을 종료해도
+        # 마지막으로 입력한 정상 Font Size는 저장
+        font_size = self.get_font_size()
+
+        if font_size is None:
+            font_size = (
+                self.last_valid_font_size
+            )
+
+        self.save_current_settings(
+            font_size,
+            show_error=False,
+        )
+
         self.cancel_manual_update()
         self.cancel_font_size_update()
         self.cancel_overlay_layout()
@@ -661,6 +830,7 @@ class App:
         ):
             try:
                 self.obs_controller.deactivate_target_scene()
+
             except Exception:
                 pass
 
