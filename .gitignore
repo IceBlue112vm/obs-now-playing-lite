@@ -11,6 +11,4 @@ __pycache__/
 # Build
 build/
 dist/
-
-# Runtime output
 settings.json
