@@ -17,12 +17,6 @@
 
 ---
 
-OBS Now Playing Lite automatically detects the title and artist of the media
-currently playing on Windows and displays them in OBS.
-
-It is designed to reduce repetitive tasks such as copying track information,
-editing text sources, and repositioning them whenever the media changes.
-
 OBS Now Playing Lite automatically detects the title and artist of the media currently playing on Windows and displays them in OBS.
 
 It is designed to reduce repetitive tasks such as copying track information, editing text sources, and repositioning them whenever the media changes.
@@ -223,15 +217,45 @@ Built with:
 
 ### Build
 
-Install the dependencies:
+Create and activate a virtual environment:
 
 ```powershell
-python -m pip install -r requirements.txt
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
-Build the executable using the included PyInstaller spec file:
+Install the build dependencies:
+
 ```powershell
-pyinstaller OBSNowPlayingLite.spec
+python -m pip install -r requirements-build.txt
 ```
 
-The executable will be created in the dist directory.
+Build the application using the included build script:
+
+```powershell
+.\build.ps1
+```
+
+The build script:
+
+- Cleans previous build outputs
+- Builds the executable using `OBSNowPlayingLite.spec`
+- Creates a release package containing the executable and README
+- Generates the final ZIP file in the `dist` directory
+
+You can optionally specify a version for the package name:
+
+```powershell
+.\build.ps1 -Version "0.2.0"
+```
+
+Build outputs are created in:
+
+```text
+dist/
+├── OBSNowPlayingLite.exe
+├── OBSNowPlayingLite-v0.2.0/
+└── OBSNowPlayingLite-v0.2.0.zip
+```
+
+The generated ZIP file is the package intended for distribution.
