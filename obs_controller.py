@@ -17,6 +17,9 @@ RIGHT_MARGIN = 20
 BOTTOM_MARGIN = 20
 LINE_GAP = 5
 
+MAX_TEXT_WIDTH_RATIO = 0.60
+ELLIPSIS = "..."
+
 SCENE_ITEM_ALIGNMENT_TOP_LEFT = 5
 
 DEFAULT_OUTLINE_ENABLED = True
@@ -345,6 +348,16 @@ class OBSController:
     # Overlay layout
     # ------------------------------------------------------------------
 
+    def get_source_text(self, source_name):
+        response = self.client.get_input_settings(
+            source_name
+        )
+
+        return response.input_settings.get(
+            "text",
+            "",
+        )
+
     def get_source_size(
         self,
         scene_name,
@@ -465,3 +478,91 @@ class OBSController:
             left,
             artist_y,
         )
+
+    def get_max_text_width(self):
+        canvas_width, _ = self.get_canvas_size()
+
+        return (
+                canvas_width * MAX_TEXT_WIDTH_RATIO
+                - RIGHT_MARGIN
+        )
+
+    def fit_source_text(
+            self,
+            scene_name,
+            source_name,
+    ):
+        source_size = self.get_source_size(
+            scene_name,
+            source_name,
+        )
+
+        if source_size is None:
+            return False
+
+        source_width, _ = source_size
+        max_width = self.get_max_text_width()
+
+        # 이미 허용 범위 안이면 그대로 사용
+        if source_width <= max_width:
+            return False
+
+        text = self.get_source_text(
+            source_name
+        )
+
+        if not text:
+            return False
+
+        # 이전 단계에서 붙인 ...은 글자 수 계산에서 제외
+        if text.endswith(ELLIPSIS):
+            content = text[:-len(ELLIPSIS)]
+        else:
+            content = text
+
+        if len(content) <= 1:
+            return False
+
+        # 현재 실제 폭을 이용해서
+        # 대략 몇 글자까지 들어갈지 계산
+        ratio = max_width / source_width
+
+        keep_length = max(
+            1,
+            int(len(content) * ratio) - 1,
+        )
+
+        shortened = (
+                content[:keep_length].rstrip()
+                + ELLIPSIS
+        )
+
+        # 반드시 이전 문자열보다 짧아지도록 보장
+        if shortened == text:
+            shortened = (
+                    content[:-1].rstrip()
+                    + ELLIPSIS
+            )
+
+        self.client.set_input_settings(
+            source_name,
+            {"text": shortened},
+            True,
+        )
+
+        return True
+
+    def fit_overlay_texts(self):
+        if self.target_scene is None:
+            return False
+
+        text_changed = False
+
+        for source_name in TEXT_SOURCES:
+            if self.fit_source_text(
+                self.target_scene,
+                source_name,
+            ):
+                text_changed = True
+
+        return text_changed
