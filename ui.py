@@ -9,7 +9,10 @@ from obs_controller import OBSController
 from settings import load_settings, save_settings
 
 
-WINDOW_SIZE = "420x400"
+APP_VERSION = "0.2.0-dev"
+APP_AUTHOR = "77ㅑ르륵"
+
+WINDOW_SIZE = "420x420"
 
 MEDIA_POLL_INTERVAL_SEC = 1
 QUEUE_POLL_INTERVAL_MS = 100
@@ -110,6 +113,7 @@ class App:
         self.create_connection_section(main_frame)
         self.create_media_section(main_frame)
         self.create_control_section(main_frame)
+        self.create_footer(main_frame)
 
     def create_connection_section(self, parent):
         ttk.Label(
@@ -240,6 +244,23 @@ class App:
         self.toggle_button.pack(
             fill="x",
             pady=(20, 0),
+        )
+
+    def create_footer(self, parent):
+        style = ttk.Style()
+        style.configure(
+            "Footer.TLabel",
+            foreground="#999999",
+            font=("Segoe", 10),
+        )
+
+        ttk.Label(
+            parent,
+            text=f"v{APP_VERSION} · by {APP_AUTHOR}",
+            style="Footer.TLabel",
+        ).pack(
+            side="bottom",
+            anchor="e",
         )
 
     def bind_variable_changes(self):
