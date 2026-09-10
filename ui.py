@@ -15,7 +15,7 @@ from settings import load_settings, save_settings
 APP_VERSION = "0.2.0-dev"
 APP_AUTHOR = "77ㅑ르륵"
 
-WINDOW_SIZE = "420x420"
+WINDOW_SIZE = "440x650"
 
 MEDIA_POLL_INTERVAL_SEC = 1
 QUEUE_POLL_INTERVAL_MS = 100
@@ -29,6 +29,15 @@ DEFAULT_FONT_SIZE = 32
 MIN_FONT_SIZE = 10
 MAX_FONT_SIZE = 500
 
+BG_COLOR = "#F4F2EE"
+CARD_COLOR = "#FCFBF9"
+TEXT_COLOR = "#2F2F2F"
+SUBTEXT_COLOR = "#77736E"
+BORDER_COLOR = "#DDD8D1"
+ACCENT_COLOR = "#8A5F3D"
+ACCENT_HOVER_COLOR = "#765034"
+ACCENT_PRESSED_COLOR = "#68442F"
+ACCENT_TEXT_COLOR = "#FFFDF9"
 
 def resource_path(relative_path):
     if getattr(sys, "frozen", False):
@@ -117,119 +126,320 @@ class App:
     # ------------------------------------------------------------------
 
     def create_widgets(self):
+        self.configure_styles()
+
         main_frame = ttk.Frame(
             self.root,
-            padding=20,
+            padding=(20, 18),
         )
         main_frame.pack(
             fill="both",
             expand=True,
         )
 
+        self.create_header(main_frame)
         self.create_connection_section(main_frame)
         self.create_media_section(main_frame)
         self.create_control_section(main_frame)
         self.create_footer(main_frame)
 
-    def create_connection_section(self, parent):
+    def configure_styles(self):
+        style = ttk.Style()
+
+        # Makes custom colors more consistently visible on Windows.
+        style.theme_use("clam")
+
+        self.root.configure(
+            bg=BG_COLOR,
+        )
+
+        style.configure(
+            "TFrame",
+            background=BG_COLOR,
+        )
+
+        style.configure(
+            "Card.TFrame",
+            background=CARD_COLOR,
+        )
+
+        style.configure(
+            "TLabel",
+            background=BG_COLOR,
+            foreground=TEXT_COLOR,
+            font=("Malgun Gothic", 10),
+        )
+
+        style.configure(
+            "Title.TLabel",
+            background=BG_COLOR,
+            foreground=TEXT_COLOR,
+            font=("Malgun Gothic", 16, "bold"),
+        )
+
+        style.configure(
+            "Subtitle.TLabel",
+            background=BG_COLOR,
+            foreground=SUBTEXT_COLOR,
+            font=("Malgun Gothic", 10),
+        )
+
+        style.configure(
+            "Section.TLabelframe",
+            background=CARD_COLOR,
+            bordercolor=BORDER_COLOR,
+            relief="solid",
+            padding=12,
+        )
+
+        style.configure(
+            "Section.TLabelframe.Label",
+            background=CARD_COLOR,
+            foreground=TEXT_COLOR,
+            font=("Malgun Gothic", 11, "bold"),
+        )
+
+        style.configure(
+            "Card.TLabel",
+            background=CARD_COLOR,
+            foreground=TEXT_COLOR,
+            font=("Malgun Gothic", 10),
+        )
+
+        style.configure(
+            "Status.TLabel",
+            background=CARD_COLOR,
+            foreground=SUBTEXT_COLOR,
+            font=("Malgun Gothic", 10),
+        )
+
+        style.configure(
+            "TEntry",
+            fieldbackground="#FFFFFF",
+            foreground=TEXT_COLOR,
+            bordercolor=BORDER_COLOR,
+            padding=5,
+        )
+
+        style.configure(
+            "TSpinbox",
+            fieldbackground="#FFFFFF",
+            foreground=TEXT_COLOR,
+            bordercolor=BORDER_COLOR,
+            padding=4,
+        )
+
+        style.configure(
+            "Accent.TButton",
+            background=ACCENT_COLOR,
+            foreground=ACCENT_TEXT_COLOR,
+            bordercolor=ACCENT_COLOR,
+            font=("Malgun Gothic", 10, "bold"),
+            padding=(10, 7),
+        )
+
+        style.map(
+            "Accent.TButton",
+            background=[
+                ("disabled", "#D8D1CB"),
+                ("pressed", ACCENT_PRESSED_COLOR),
+                ("active", ACCENT_HOVER_COLOR),
+            ],
+            foreground=[
+                ("disabled", "#9B938D"),
+            ],
+        )
+
+    def create_header(self, parent):
+        header = ttk.Frame(parent)
+        header.pack(
+            fill="x",
+            pady=(0, 18),
+        )
+
         ttk.Label(
-            parent,
-            text="OBS WebSocket 비밀번호",
+            header,
+            text="OBS Now Playing Lite",
+            style="Title.TLabel",
         ).pack(anchor="w")
 
-        password_frame = ttk.Frame(parent)
-        password_frame.pack(
+        ttk.Label(
+            header,
+            text="현재 재생 중인 미디어 정보를 OBS에 자동으로 표시합니다.",
+            style="Subtitle.TLabel",
+        ).pack(
+            anchor="w",
+            pady=(3, 0),
+        )
+
+    def create_connection_section(self, parent):
+        section = ttk.LabelFrame(
+            parent,
+            text=" OBS 연결",
+            style="Section.TLabelframe",
+        )
+        section.pack(
             fill="x",
-            pady=(5, 10),
+            pady=(0, 12),
+        )
+
+        section.columnconfigure(0, weight=1)
+
+        ttk.Label(
+            section,
+            text="WebSocket 비밀번호",
+            style="Card.TLabel",
+        ).grid(
+            row=0,
+            column=0,
+            columnspan=2,
+            sticky="w",
         )
 
         self.password_entry = ttk.Entry(
-            password_frame,
+            section,
             show="*",
         )
-        self.password_entry.pack(
-            side="left",
-            fill="x",
-            expand=True,
+        self.password_entry.grid(
+            row=1,
+            column=0,
+            sticky="ew",
+            pady=(5, 8),
         )
 
         self.connect_button = ttk.Button(
-            password_frame,
+            section,
             text="연결",
             command=self.connect_obs,
+            width=9,
         )
-        self.connect_button.pack(
+        self.connect_button.grid(
+            row=1,
+            column=1,
+            padx=(8, 0),
+            pady=(5, 8),
+        )
+
+        status_frame = ttk.Frame(
+            section,
+            style="Card.TFrame",
+        )
+        status_frame.grid(
+            row=2,
+            column=0,
+            columnspan=2,
+            sticky="w",
+        )
+
+        self.obs_status_dot = tk.Canvas(
+            status_frame,
+            width=10,
+            height=10,
+            bg=CARD_COLOR,
+            highlightthickness=0,
+            bd=0,
+        )
+
+        self.obs_status_dot.pack(
             side="left",
-            padx=(10, 0),
+            padx=(0, 6),
+        )
+
+        self.obs_status_circle = self.obs_status_dot.create_oval(
+            2,
+            2,
+            8,
+            8,
+            fill="#999999",
+            outline="",
         )
 
         self.obs_status_label = ttk.Label(
-            parent,
-            text="OBS: 연결되지 않음",
+            status_frame,
+            text="연결되지 않음",
+            style="Status.TLabel",
         )
-        self.obs_status_label.pack(anchor="w")
+        self.obs_status_label.pack(side="left")
 
     def create_media_section(self, parent):
-        ttk.Separator(parent).pack(
+        section = ttk.LabelFrame(
+            parent,
+            text=" 현재 재생 정보",
+            style="Section.TLabelframe",
+        )
+        section.pack(
             fill="x",
-            pady=15,
+            pady=(0, 12),
         )
 
-        ttk.Label(
-            parent,
-            text="현재 재생 정보",
-        ).pack(anchor="w")
+        section.columnconfigure(0, weight=1)
 
         ttk.Label(
-            parent,
+            section,
             text="제목",
-        ).pack(
-            anchor="w",
-            pady=(5, 0),
+            style="Card.TLabel",
+        ).grid(
+            row=0,
+            column=0,
+            sticky="w",
         )
 
         self.title_entry = ttk.Entry(
-            parent,
+            section,
             textvariable=self.title_var,
         )
-        self.title_entry.pack(
-            fill="x",
-            pady=(2, 5),
+        self.title_entry.grid(
+            row=1,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            pady=(5, 10),
         )
 
         ttk.Label(
-            parent,
+            section,
             text="아티스트",
-        ).pack(anchor="w")
+            style="Card.TLabel",
+        ).grid(
+            row=2,
+            column=0,
+            sticky="w",
+        )
 
         self.artist_entry = ttk.Entry(
-            parent,
+            section,
             textvariable=self.artist_var,
         )
-        self.artist_entry.pack(
-            fill="x",
-            pady=(2, 5),
-        )
-
-        font_frame = ttk.Frame(parent)
-        font_frame.pack(
-            fill="x",
-            pady=(10, 0),
+        self.artist_entry.grid(
+            row=3,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            pady=(5, 25),
         )
 
         ttk.Label(
-            font_frame,
-            text="글자 크기",
-        ).pack(side="left")
+            section,
+            text="폰트 크기",
+            style="Card.TLabel",
+        ).grid(
+            row=4,
+            column=0,
+            sticky="w",
+        )
 
         self.font_size_spinbox = ttk.Spinbox(
-            font_frame,
+            section,
             from_=MIN_FONT_SIZE,
             to=MAX_FONT_SIZE,
             textvariable=self.font_size_var,
             width=6,
         )
-        self.font_size_spinbox.pack(side="right")
+        self.font_size_spinbox.grid(
+            row=4,
+            column=1,
+            sticky="e",
+        )
 
         self.font_size_spinbox.bind(
             "<FocusOut>",
@@ -242,24 +452,36 @@ class App:
         )
 
     def create_control_section(self, parent):
-        self.target_label = ttk.Label(
+        section = ttk.LabelFrame(
             parent,
+            text=" 표시 제어",
+            style="Section.TLabelframe",
+        )
+        section.pack(
+            fill="x",
+            pady=(0, 12),
+        )
+
+        self.target_label = ttk.Label(
+            section,
             text="대상 장면: -",
+            style="Card.TLabel",
         )
         self.target_label.pack(
+            fill="x",
             anchor="w",
-            pady=(10, 0),
         )
 
         self.toggle_button = ttk.Button(
-            parent,
+            section,
             text="표시 시작",
             command=self.toggle_active,
             state="disabled",
+            style="Accent.TButton",
         )
         self.toggle_button.pack(
             fill="x",
-            pady=(20, 0),
+            pady=(12, 0),
         )
 
     def create_footer(self, parent):
@@ -267,7 +489,7 @@ class App:
         style.configure(
             "Footer.TLabel",
             foreground="#999999",
-            font=("Segoe", 10),
+            font=("Segoe", 9),
         )
 
         ttk.Label(
@@ -370,8 +592,13 @@ class App:
         self.save_current_settings()
 
     def set_obs_connected(self):
+        self.obs_status_dot.itemconfig(
+            self.obs_status_circle,
+            fill="#4CAF50",
+        )
+
         self.obs_status_label.config(
-            text="OBS: 연결됨"
+            text="연결됨"
         )
 
         self.connect_button.config(
@@ -388,8 +615,13 @@ class App:
         )
 
     def set_obs_disconnected(self):
+        self.obs_status_dot.itemconfig(
+            self.obs_status_circle,
+            fill="#E57373",
+        )
+
         self.obs_status_label.config(
-            text="OBS: 연결 실패"
+            text="연결 실패"
         )
 
         self.connect_button.config(
